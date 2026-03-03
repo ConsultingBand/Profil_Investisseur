@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profil Investisseur</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0A0C10; font-family: Georgia, 'Times New Roman', serif; min-height: 100vh; }
+
+    #root { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 40px 16px; background: #0A0C10; }
+
+    .card     { background: #111318; border: 1px solid #1E2028; border-radius: 18px; padding: 44px 36px; max-width: 680px; width: 100%; box-shadow: 0 10px 60px rgba(0,0,0,.5); }
+    .card-sm  { max-width: 520px; text-align: center; }
+    .card-q   { max-width: 640px; overflow: hidden; padding: 0; }
+    .card-r   { max-width: 760px; padding: 0; }
+
+    .logo         { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+    .logo-diamond { color: #F5C518; font-size: 18px; }
+    .logo-txt     { font-family: Arial, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 3px; color: rgba(255,255,255,.5); text-transform: uppercase; }
+    h1.main       { font-size: 32px; font-weight: 400; color: #FFF; margin-bottom: 12px; line-height: 1.25; }
+    .sub          { font-size: 15px; color: #8899BB; line-height: 1.65; margin-bottom: 32px; }
+
+    .steps-row { display: flex; gap: 12px; margin-bottom: 32px; }
+    .step-card { flex: 1; background: #161A22; border-radius: 12px; padding: 18px 12px; text-align: center; border: 1px solid #1E2028; border-top-width: 4px; }
+    .step-num  { display: block; font-family: Arial, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 2px; margin-bottom: 4px; }
+    .step-lbl  { font-size: 14px; font-weight: 600; color: #CDD; }
+    .step-icon { display: flex; justify-content: center; margin-bottom: 10px; }
+
+    .form-label { font-size: 12px; color: #8899BB; font-family: Arial, sans-serif; margin-bottom: 10px; }
+    .name-row   { display: flex; gap: 12px; margin-bottom: 24px; }
+    .name-field { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+    .f-label    { font-size: 11px; font-weight: 700; color: #8899BB; font-family: Arial, sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+    input       { border: 1.5px solid #2A2D35; border-radius: 8px; padding: 10px 14px; font-size: 15px; font-family: inherit; outline: none; color: #EEE; background: #161A22; width: 100%; }
+    input:focus { border-color: #4A5060; }
+
+    .btn-primary { border: none; border-radius: 10px; padding: 14px 28px; font-size: 15px; font-weight: 700; color: #111; cursor: pointer; font-family: Arial, sans-serif; width: 100%; background: #F5C518; transition: opacity .2s; }
+    .btn-primary:disabled { opacity: .4 !important; cursor: not-allowed; }
+    .btn-accent  { color: #FFF !important; width: auto !important; }
+    .btn-sec     { border: 1.5px solid #3A3D45; border-radius: 10px; padding: 12px 22px; font-size: 14px; font-weight: 500; color: #99AABB; cursor: pointer; font-family: Arial, sans-serif; background: transparent; }
+    .btn-sec:disabled { opacity: .3; cursor: not-allowed; }
+
+    .dot-row   { display: flex; gap: 6px; justify-content: center; margin-bottom: 28px; align-items: center; }
+    .dot       { height: 8px; border-radius: 4px; transition: all .3s; }
+    .sec-icon  { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .sec-badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 2px; font-family: Arial, sans-serif; text-transform: uppercase; margin-bottom: 12px; }
+    .sec-title { font-size: 30px; font-weight: 400; color: #FFF; margin-bottom: 14px; }
+    .sec-desc  { font-size: 15px; color: #99AABB; line-height: 1.7; margin-bottom: 18px; }
+    .meta-tag  { display: inline-block; background: #161A22; padding: 4px 12px; border-radius: 20px; font-size: 12px; color: #8899BB; font-family: Arial, sans-serif; border: 1px solid #2A2D35; margin-bottom: 28px; }
+
+    .top-bar     { padding: 16px 24px 0; }
+    .top-bar-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .sec-tag-sm  { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; font-family: Arial, sans-serif; display: flex; align-items: center; gap: 7px; color: #111; }
+    .q-count     { color: #8899BB; font-size: 12px; font-family: Arial, sans-serif; }
+    .p-bar       { height: 3px; background: #1E2028; border-radius: 2px; }
+    .p-fill      { height: 100%; border-radius: 2px; transition: width .4s ease; }
+    .q-body      { padding: 26px 26px 14px; }
+    .q-badge     { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: Arial, sans-serif; letter-spacing: .5px; margin-bottom: 12px; }
+    .q-text      { font-size: 19px; font-weight: 400; color: #FFF; margin-bottom: 20px; line-height: 1.45; }
+    .answer-list { display: flex; flex-direction: column; gap: 9px; }
+    .ans-btn     { display: flex; align-items: flex-start; gap: 12px; padding: 13px 16px; border-radius: 10px; border: 1.5px solid #2A2D35; cursor: pointer; text-align: left; transition: all .15s; font-family: inherit; width: 100%; background: #161A22; }
+    .ans-dot     { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #3A3D45; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; }
+    .ans-lbl     { font-size: 15px; line-height: 1.4; color: #CDD; }
+    .nav-row     { display: flex; justify-content: space-between; padding: 14px 26px 22px; gap: 12px; }
+
+    .r-header    { background: #0D0F14; padding: 26px 28px; border-bottom: 1px solid #1E2028; border-radius: 18px 18px 0 0; }
+    .r-pretitle  { color: #8899BB; font-size: 12px; font-family: Arial, sans-serif; margin: 4px 0; }
+    .r-name      { color: #FFF; font-size: 24px; font-weight: 400; margin-bottom: 4px; }
+    .r-date      { color: #8899BB; font-size: 11px; font-family: Arial, sans-serif; }
+    .charts-area { padding: 20px 24px 8px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #1E2028; }
+    .chart-row   { display: flex; align-items: center; gap: 16px; background: #161A22; border-radius: 12px; padding: 16px 20px; border: 1px solid #1E2028; }
+    .chart-meta  { display: flex; align-items: center; gap: 12px; min-width: 130px; }
+    .chart-sec-lbl { display: block; font-family: Arial, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 3px; }
+    .chart-score { display: block; font-size: 13px; color: #8899BB; font-family: Arial, sans-serif; }
+    .chart-svg   { flex: 1; min-width: 0; }
+    .detail-card { padding: 20px 24px; border-bottom: 1px solid #1E2028; border-top: 3px solid transparent; }
+    .detail-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .detail-sec  { font-family: Arial, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; display: block; }
+    .detail-prof { color: #F5C518; font-size: 16px; font-weight: 700; font-family: Arial, sans-serif; }
+    .detail-desc { font-size: 14px; color: #99AACC; line-height: 1.7; font-family: Arial, sans-serif; }
+    .excl-box    { background: #1A1210; border: 1px solid #3A1A1A; border-radius: 8px; padding: 12px 14px; margin-top: 12px; }
+    .excl-title  { font-weight: 700; color: #EE6666; font-size: 11px; margin-bottom: 8px; font-family: Arial, sans-serif; letter-spacing: 1px; text-transform: uppercase; display: block; }
+    .excl-tags   { display: flex; flex-wrap: wrap; gap: 6px; }
+    .excl-tag    { background: #2A1515; color: #EE8888; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-family: Arial, sans-serif; border: 1px solid #3A2020; }
+    .r-footer    { padding: 14px 24px; background: #0D0F14; border-top: 1px solid #1E2028; border-radius: 0 0 18px 18px; }
+    .disclaimer  { font-size: 10px; color: #556677; line-height: 1.6; margin-bottom: 3px; font-family: Arial, sans-serif; }
+    .foot-date   { font-size: 10px; color: #3A4050; font-family: Arial, sans-serif; }
+    .restart-wrap{ margin: 20px auto; max-width: 300px; width: 100%; text-align: center; }
+    .results-outer{ width: 100%; display: flex; flex-direction: column; align-items: center; }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-up { opacity: 0; animation: fadeUp .55s ease forwards; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+const QUESTIONS = [
+  { id:"Q1",  type:"Connaissances", format:"MONO", label:"Qu'est-ce qu'une action ?",
+    answers:[{id:"R1",label:"Un organisme de placement.",score:0},{id:"R2",label:"Une part de la dette d'une entreprise.",score:0},{id:"R3",label:"Une part du capital d'une entreprise.",score:3}]},
+  { id:"Q2",  type:"Connaissances", format:"MONO", label:"Diversifier son épargne, c'est\u2026",
+    answers:[{id:"R4",label:"\u2026potentiellement diminuer les frais.",score:0},{id:"R5",label:"\u2026potentiellement diminuer les risques.",score:3},{id:"R6",label:"\u2026potentiellement améliorer le rendement.",score:0}]},
+  { id:"Q3",  type:"Connaissances", format:"MONO", label:"Combien d'opérations boursières effectuez-vous par an ?",
+    answers:[{id:"R7",label:"Moins de 10.",score:0},{id:"R8",label:"Entre 10 et 40.",score:2},{id:"R9",label:"Plus de 40.",score:3}]},
+  { id:"Q4",  type:"Connaissances", format:"MONO", label:"Possédez-vous une assurance vie et / ou un Compte titre ?",
+    answers:[{id:"R10a",label:"Oui",score:1},{id:"R10b",label:"Non",score:0}]},
+  { id:"Q5",  type:"Connaissances", format:"MONO", label:"Quand deux placements sont corrélés\u2026",
+    answers:[{id:"R11",label:"Ils évoluent différemment.",score:0},{id:"R12",label:"Ils évoluent dans le même sens.",score:3},{id:"R13",label:"Ils appartiennent au même groupe financier.",score:0}]},
+  { id:"Q6",  type:"Connaissances", format:"MONO", label:"Un placement liquide est un placement\u2026",
+    answers:[{id:"R14",label:"Consommant de l'eau (ex : investissement dans un datacenter)",score:0},{id:"R15",label:"Que je peux transférer gratuitement dans le cadre d'un héritage.",score:0},{id:"R16",label:"Avec lequel je peux récupérer l'argent à tout moment.",score:3}]},
+  { id:"Q7",  type:"Connaissances", format:"MONO", label:"Parmi ces placements, lequel constitue une épargne de précaution ?",
+    answers:[{id:"R17",label:"Un livret A.",score:3},{id:"R18",label:"Un CTO avec un mandat de gestion produits structurés.",score:0},{id:"R19",label:"Un investissement dans la pierre-papier.",score:0}]},
+  { id:"Q8",  type:"Connaissances", format:"MONO", label:"Le Private Equity, aussi appelé capital-investissement\u2026",
+    answers:[{id:"R20",label:"Constitue une épargne pleinement liquide.",score:0},{id:"R21",label:"Bloque complètement l'épargne pour investir dans des actifs non cotés (entreprises, fonds de placement immobiliers, infrastructure)",score:3},{id:"R22",label:"Permet d'investir strictement en local.",score:0}]},
+  { id:"Q9",  type:"Connaissances", format:"MULTI", label:"J'ai déjà investi dans ces produits\u2026",
+    answers:[{id:"R23",label:"Actions",score:1},{id:"R24",label:"Obligations",score:1},{id:"R25",label:"ETF",score:1},{id:"R26",label:"Produits structurés",score:2},{id:"R27",label:"Private Equity",score:2},{id:"R28",label:"Produits dérivés",score:1}]},
+  { id:"Q10", type:"Risque", format:"MONO", label:"Que souhaitez-vous faire de vos investissements ?",
+    answers:[{id:"R29",label:"Préserver le capital",score:1},{id:"R30",label:"Générer un revenu complémentaire",score:2},{id:"R31",label:"Faire croître progressivement le capital",score:3},{id:"R32",label:"Maximiser la performance à long terme",score:4}]},
+  { id:"Q11", type:"Risque", format:"MONO", label:"À quel horizon souhaitez-vous placer votre argent ?",
+    answers:[{id:"R33",label:"Moins de 2 ans",score:1},{id:"R34",label:"2 à 5 ans",score:2},{id:"R35",label:"5 à 8 ans.",score:3},{id:"R36",label:"Plus de 8 ans.",score:4}]},
+  { id:"Q12", type:"Risque", format:"MONO", label:"Quelle partie de votre patrimoine allez-vous investir ?",
+    answers:[{id:"R37",label:"Plus de 75 % de mon patrimoine",score:1},{id:"R38",label:"Entre 50 % et 75 %",score:2},{id:"R39",label:"Entre 25 % et 50 %",score:3},{id:"R40",label:"Moins de 25 %",score:4}]},
+  { id:"Q13", type:"Risque", format:"MONO", label:"L'investissement dans lequel vous avez investi vient de chuter de 15%.",
+    answers:[{id:"R41",label:"Je vends immédiatement",score:1},{id:"R42",label:"J'attends que ça remonte",score:2},{id:"R43",label:"Je conserve sans changer",score:3},{id:"R44",label:"J'en profite pour investir davantage",score:4}]},
+  { id:"Q14", type:"Risque", format:"MONO", label:"Quelle est votre capacité à immobiliser les fonds investis ?",
+    answers:[{id:"R45",label:"Les fonds doivent rester disponibles à tout moment",score:1},{id:"R46",label:"Une partie peut être immobilisée moins de 3 ans",score:2},{id:"R47",label:"Je peux immobiliser les fonds 3 à 8 ans",score:3},{id:"R48",label:"Je peux immobiliser les fonds plus de 8 ans",score:4}]},
+  { id:"Q15", type:"ESG", format:"MONO", label:"Souhaitez-vous que des critères Environnementaux, Sociaux et de Gouvernance soient intégrés dans la sélection de vos investissements ?",
+    answers:[{id:"R49",label:"Non, la performance financière est prioritaire",score:0},{id:"R50",label:"Oui, si cela n'impacte pas significativement la performance",score:1},{id:"R51",label:"Oui, je privilégie des fonds intégrant des critères ESG",score:2},{id:"R52",label:"Oui, je souhaite une stratégie majoritairement orientée vers des investissements durables",score:3}]},
+  { id:"Q16", type:"ESG", format:"MONO", label:"Quel niveau d'engagement souhaitez-vous en termes d'investissement durable ?",
+    answers:[{id:"R53",label:"Aucune contrainte spécifique",score:0},{id:"R54",label:"Exclusion des armes controversées uniquement",score:1},{id:"R55",label:"Exclusions sectorielles + sélection ESG active",score:2},{id:"R56",label:"Investissements alignés avec des objectifs environnementaux mesurables",score:3}]},
+  { id:"Q17", type:"ESG", format:"MONO", label:"Seriez-vous favorable à investir dans des entreprises contribuant :",
+    answers:[{id:"R57",label:"Aucune préférence particulière",score:0},{id:"R58",label:"Contribution à la transition énergétique",score:1},{id:"R59",label:"Réduction mesurable des émissions carbone",score:2},{id:"R60",label:"Alignement avec la taxonomie européenne durable",score:3}]},
+  { id:"Q18", type:"ESG", format:"MULTI", exclusion:true, label:"Quelles industries souhaitez-vous garder loin de votre portefeuille ?",
+    answers:[{id:"R61",label:"Armement (notamment armes controversées)",score:0},{id:"R62",label:"Tabac",score:0},{id:"R63",label:"Charbon thermique",score:0},{id:"R64",label:"Pétrole et gaz non conventionnels",score:0},{id:"R65",label:"Jeux d'argent",score:0},{id:"R66",label:"Pornographie",score:0},{id:"R67",label:"Production d'énergie fortement carbonée",score:0},{id:"R68",label:"Entreprises ne respectant pas les principes du Pacte Mondial des Nations Unies",score:0},{id:"R69",label:"Combustibles fossiles",score:0},{id:"R70",label:"Huile de palme non durable",score:0},{id:"R71",label:"OGM non encadrés",score:0},{id:"R72",label:"Extraction minière controversée",score:0}]},
+];
+
+const SECTIONS = [
+  { id:"Connaissances", label:"Connaissances", desc:"Nous souhaitons déterminer dans un premier temps votre niveau d'expertise en investissements.", color:"#0A1E3A", accent:"#2A72C8", light:"#071220" },
+  { id:"Risque",        label:"Risque",        desc:"Quelle est votre appétence au risque ? Comment réagissez-vous face aux bouleversements ? Déterminons-le ensemble.", color:"#3A1608", accent:"#E07840", light:"#1E100A" },
+  { id:"ESG",           label:"ESG",           desc:"Quel degré de durabilité souhaitez-vous donner à votre patrimoine ?", color:"#0A2018", accent:"#4CAF8A", light:"#061410" },
+];
+
+const RESULTS = {
+  Connaissances: [
+    { min:0,  max:9,  label:"Débutant",      desc:"Vous débutez dans l'univers de l'investissement. Nous vous accompagnerons avec des solutions pédagogiques et adaptées à votre niveau." },
+    { min:10, max:19, label:"Intermédiaire", desc:"Vous avez une bonne compréhension des bases de l'investissement. Vous êtes prêt(e) pour des stratégies plus diversifiées." },
+    { min:20, max:30, label:"Avancé",        desc:"Vous maîtrisez les concepts financiers complexes. Vous pouvez accéder à des produits sophistiqués et des stratégies avancées." },
+  ],
+  Risque: [
+    { min:0,  max:5,  label:"Prudent",   desc:"La préservation du capital est votre priorité absolue. Vous privilégiez la sécurité sur le rendement." },
+    { min:6,  max:10, label:"Équilibré", desc:"Vous recherchez un juste équilibre entre performance et sécurité, avec une tolérance modérée à la volatilité." },
+    { min:11, max:15, label:"Dynamique", desc:"Vous acceptez une volatilité importante pour viser des rendements supérieurs sur le long terme." },
+    { min:16, max:20, label:"Offensif",  desc:"Vous recherchez la performance maximale et acceptez les fluctuations significatives de vos investissements." },
+  ],
+  ESG: [
+    { min:0, max:3, label:"Neutre",    desc:"La performance financière reste votre critère principal. Les aspects ESG ne constituent pas une priorité à ce stade." },
+    { min:4, max:6, label:"Intéressé", desc:"Vous portez un intérêt croissant aux enjeux durables et souhaitez les intégrer progressivement dans vos choix." },
+    { min:7, max:9, label:"Engagé",    desc:"Le développement durable est au cœur de votre stratégie patrimoniale. Vous souhaitez un impact positif mesurable." },
+  ],
+};
+
+const MAX_SCORES = { Connaissances:30, Risque:20, ESG:9 };
+const SECTION_QUESTIONS = {
+  Connaissances: QUESTIONS.filter(q => q.type === "Connaissances"),
+  Risque:        QUESTIONS.filter(q => q.type === "Risque"),
+  ESG:           QUESTIONS.filter(q => q.type === "ESG"),
+};
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+
+function getProfile(type, score) {
+  return RESULTS[type]?.find(r => score >= r.min && score <= r.max) || null;
+}
+
+function computeScores() {
+  const s = {Connaissances:0, Risque:0, ESG:0};
+  QUESTIONS.forEach(q => {
+    if (q.exclusion) return;
+    const ans = state.answers[q.id];
+    if (!ans) return;
+    if (q.format === 'MONO') {
+      const f = q.answers.find(a => a.id === ans);
+      if (f) s[q.type] += f.score;
+    } else {
+      (ans||[]).forEach(id => { const f = q.answers.find(a => a.id === id); if (f) s[q.type] += f.score; });
+    }
+  });
+  return s;
+}
+
+function el(tag, attrs, children) {
+  const e = document.createElement(tag);
+  if (attrs) Object.entries(attrs).forEach(([k,v]) => {
+    if (k === 'class') e.className = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (k === 'text') e.textContent = v;
+    else if (k === 'html') e.innerHTML = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  });
+  if (children) (Array.isArray(children)?children:[children]).forEach(c => c && e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
+  return e;
+}
+
+// ── SVG ICONS ─────────────────────────────────────────────────────────────────
+
+function svgIcon(type, color, size) {
+  size = size || 28;
+  const ns = 'http://www.w3.org/2000/svg';
+  const s = (tag, attrs) => { const e = document.createElementNS(ns,tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); return e; };
+  const svg = s('svg', {width:size, height:size, viewBox:'0 0 28 28', fill:'none'});
+  if (type === 'Connaissances') {
+    svg.append(s('rect',{x:4,y:5,width:14,height:18,rx:2,fill:color,opacity:.2}),s('rect',{x:7,y:3,width:14,height:18,rx:2,fill:color}),
+      s('line',{x1:10,y1:8,x2:18,y2:8,stroke:'#fff','stroke-width':1.5,'stroke-linecap':'round'}),
+      s('line',{x1:10,y1:11.5,x2:18,y2:11.5,stroke:'#fff','stroke-width':1.5,'stroke-linecap':'round'}),
+      s('line',{x1:10,y1:15,x2:15,y2:15,stroke:'#fff','stroke-width':1.5,'stroke-linecap':'round'}));
+  } else if (type === 'Risque') {
+    svg.append(s('path',{d:'M14 4 L25 23 H3 Z',fill:color,opacity:.2}),s('path',{d:'M14 7 L23 22 H5 Z',fill:color}),
+      s('line',{x1:14,y1:12,x2:14,y2:17,stroke:'#fff','stroke-width':2,'stroke-linecap':'round'}),s('circle',{cx:14,cy:19.5,r:1.2,fill:'#fff'}));
+  } else {
+    svg.append(s('circle',{cx:14,cy:14,r:10,fill:color,opacity:.2}),
+      s('path',{d:'M14 4 C14 4 7 10 7 16 C7 19.9 10.1 23 14 23 C17.9 23 21 19.9 21 16 C21 10 14 4 14 4Z',fill:color}),
+      s('path',{d:'M14 23 C14 18 17 14 21 12',stroke:'#fff','stroke-width':1.5,'stroke-linecap':'round',opacity:.6}));
+  }
+  return svg;
+}
+
+function arrowChart(section, profile) {
+  const levels = RESULTS[section.id]||[];
+  const W=560,H=100,padL=20,padR=110,padT=28;
+  const innerW=W-padL-padR, arrowY=padT+(H-padT-28)/2, segW=innerW/levels.length;
+  const activeIdx=levels.findIndex(l=>l.label===profile?.label);
+  const arrowEndX=padL+(activeIdx+1)*segW;
+  const cols={3:["#3A3D50","#5A5D78","#8899AA"],4:["#3A3D50","#5A6070","#8899AA","#AABB66"]};
+  const colors=cols[levels.length]||levels.map((_,i)=>`hsl(${40+i*30},50%,45%)`);
+  const ns='http://www.w3.org/2000/svg';
+  const s=(tag,attrs,txt)=>{ const e=document.createElementNS(ns,tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); if(txt!==undefined)e.textContent=txt; return e; };
+  const svg=s('svg',{width:'100%',viewBox:`0 0 ${W} ${H}`}); svg.style.cssText='display:block;overflow:visible';
+  svg.appendChild(s('rect',{x:padL,y:arrowY-6,width:innerW,height:12,rx:6,fill:'#1E2030'}));
+  levels.forEach((lvl,i)=>{
+    const x=padL+i*segW, isA=i===activeIdx;
+    svg.appendChild(s('rect',{x:x+1,y:arrowY-6,width:segW-2,height:12,rx:i===0?6:i===levels.length-1?6:0,fill:i<=activeIdx?colors[i]:'#1E2030',opacity:i<=activeIdx?1:0.4}));
+    svg.appendChild(s('text',{x:x+segW/2,y:arrowY+24,'text-anchor':'middle','font-size':11,fill:isA?'#F5C518':'#778899','font-family':'Arial,sans-serif','font-weight':isA?'700':'400'},lvl.label));
+  });
+  if(activeIdx>=0){
+    const g=document.createElementNS(ns,'g'); g.setAttribute('transform',`translate(${arrowEndX},${arrowY})`);
+    g.appendChild(s('circle',{r:14,fill:section.accent,opacity:.15})); g.appendChild(s('circle',{r:9,fill:section.accent,opacity:.9}));
+    g.appendChild(s('polygon',{points:'-4,-5 4,0 -4,5',fill:'#111'})); svg.appendChild(g);
+  }
+  svg.appendChild(s('text',{x:Math.min(arrowEndX+16,W-4),y:arrowY+5,'font-size':13,'font-weight':'700',fill:'#F5C518','font-family':'Arial,sans-serif'},profile?.label||''));
+  return svg;
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+
+const state = { phase:'welcome', sectionIdx:0, questionIdx:0, answers:{}, firstName:'', lastName:'' };
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+
+const root = document.getElementById('root');
+
+function render() {
+  root.innerHTML = '';
+  const views = { welcome:renderWelcome, section:renderSection, question:renderQuestion, results:renderResults };
+  const node = views[state.phase]?.();
+  if (node) root.appendChild(node);
+}
+
+// ── WELCOME ───────────────────────────────────────────────────────────────────
+
+function renderWelcome() {
+  const card = el('div',{class:'card'});
+  card.appendChild(el('div',{class:'logo'},[el('span',{class:'logo-diamond',text:'◆'}),el('span',{class:'logo-txt',text:'PROFIL INVESTISSEUR'})]));
+  card.appendChild(el('h1',{class:'main',html:'Construisons ensemble<br>votre profil patrimonial'}));
+  card.appendChild(el('p',{class:'sub',text:"Un questionnaire en trois étapes pour définir votre stratégie d'investissement personnalisée, conforme aux exigences MiFID II."}));
+
+  const stepsRow = el('div',{class:'steps-row'});
+  SECTIONS.forEach((s,i) => {
+    const card2 = el('div',{class:'step-card',style:`border-top-color:${s.accent}`});
+    const iconW = el('div',{class:'step-icon'}); iconW.appendChild(svgIcon(s.id,s.accent,28));
+    card2.appendChild(iconW);
+    card2.appendChild(el('span',{class:'step-num',text:`0${i+1}`,style:`color:${s.accent}`}));
+    card2.appendChild(el('span',{class:'step-lbl',text:s.label}));
+    stepsRow.appendChild(card2);
+  });
+  card.appendChild(stepsRow);
+  card.appendChild(el('p',{class:'form-label',text:'Vos informations'}));
+
+  const nameRow = el('div',{class:'name-row'});
+  ['firstName','lastName'].forEach((key,i) => {
+    const field = el('div',{class:'name-field'});
+    field.appendChild(el('label',{class:'f-label',text:i===0?'Prénom':'Nom'}));
+    const inp = el('input',{placeholder:i===0?'Ferdinand':'Bardamu'});
+    inp.value = state[key];
+    inp.addEventListener('input', e => { state[key]=e.target.value; updateBtn(); });
+    field.appendChild(inp);
+    nameRow.appendChild(field);
+  });
+  card.appendChild(nameRow);
+
+  const startBtn = el('button',{class:'btn-primary',text:'Commencer le questionnaire →', onclick:()=>{ if(state.firstName&&state.lastName){state.phase='section';state.sectionIdx=0;render();} }});
+  startBtn.disabled = !(state.firstName&&state.lastName);
+  startBtn.style.opacity = (state.firstName&&state.lastName)?'1':'0.4';
+  startBtn.id='start-btn';
+  card.appendChild(startBtn);
+
+  function updateBtn() {
+    const b=document.getElementById('start-btn');
+    if(b){b.disabled=!(state.firstName&&state.lastName);b.style.opacity=(state.firstName&&state.lastName)?'1':'0.4';}
+  }
+  return card;
+}
+
+// ── SECTION ───────────────────────────────────────────────────────────────────
+
+function renderSection() {
+  const s = SECTIONS[state.sectionIdx];
+  const card = el('div',{class:'card card-sm',style:`border-top:6px solid ${s.accent}`});
+
+  const dotRow = el('div',{class:'dot-row'});
+  SECTIONS.forEach((_,i) => {
+    dotRow.appendChild(el('div',{class:'dot',style:`background:${i<=state.sectionIdx?SECTIONS[i].accent:'#2A2D35'};width:${i===state.sectionIdx?'36px':'12px'}`}));
+  });
+  card.appendChild(dotRow);
+
+  const iconW = el('div',{class:'sec-icon',style:`background:${s.light}`}); iconW.appendChild(svgIcon(s.id,s.accent,36));
+  card.appendChild(iconW);
+  card.appendChild(el('span',{class:'sec-badge',text:`SECTION ${state.sectionIdx+1} / ${SECTIONS.length}`,style:`color:${s.accent};background:${s.light}`}));
+  card.appendChild(el('h2',{class:'sec-title',text:s.label}));
+  card.appendChild(el('p',{class:'sec-desc',text:s.desc}));
+  card.appendChild(el('span',{class:'meta-tag',text:`${SECTION_QUESTIONS[s.id].length} questions`}));
+  card.appendChild(el('div',{style:'height:28px'}));
+
+  const btn = el('button',{class:'btn-primary btn-accent',text:'Commencer →',onclick:()=>{state.phase='question';render();},style:`background:${s.accent}`});
+  card.appendChild(btn);
+  return card;
+}
+
+// ── QUESTION ──────────────────────────────────────────────────────────────────
+
+function renderQuestion() {
+  const s = SECTIONS[state.sectionIdx];
+  const sQs = SECTION_QUESTIONS[s.id];
+  const q = sQs[state.questionIdx];
+  const isMulti = q.format === 'MULTI';
+  const progress = (state.questionIdx / sQs.length) * 100;
+  const curAns = state.answers[q.id];
+  const canGo = isMulti ? true : !!curAns;
+
+  const card = el('div',{class:'card card-q'});
+
+  // topbar
+  const tb = el('div',{class:'top-bar',style:`background:${s.color}`});
+  const tbRow = el('div',{class:'top-bar-row'});
+  const tag = el('span',{class:'sec-tag-sm',style:`background:${s.accent}`});
+  tag.appendChild(svgIcon(s.id,'#fff',15));
+  tag.appendChild(document.createTextNode(' '+s.label));
+  tbRow.appendChild(tag);
+  tbRow.appendChild(el('span',{class:'q-count',text:`${state.questionIdx+1} / ${sQs.length}`}));
+  tb.appendChild(tbRow);
+  const pBar = el('div',{class:'p-bar'});
+  pBar.appendChild(el('div',{class:'p-fill',style:`width:${progress}%;background:${s.accent}`}));
+  tb.appendChild(pBar);
+  card.appendChild(tb);
+
+  // body
+  const body = el('div',{class:'q-body'});
+  body.appendChild(el('span',{class:'q-badge',text:isMulti?'Plusieurs réponses possibles':'Une seule réponse',style:`color:${s.accent};background:${s.light}`}));
+  body.appendChild(el('h3',{class:'q-text',text:q.label}));
+  const list = el('div',{class:'answer-list'});
+  q.answers.forEach(a => {
+    const sel = isMulti ? (curAns||[]).includes(a.id) : curAns === a.id;
+    const ab = el('button',{class:'ans-btn',style:`border-color:${sel?s.accent:'#2A2D35'};background:${sel?s.light:'#161A22'};${sel?`box-shadow:0 0 0 1.5px ${s.accent}`:''}`});
+    const dot = el('div',{class:'ans-dot',style:`border-color:${sel?s.accent:'#3A3D45'};background:${sel?s.accent:'transparent'}`});
+    if(sel) dot.textContent='✓';
+    ab.appendChild(dot);
+    ab.appendChild(el('span',{class:'ans-lbl',text:a.label,style:`color:${sel?'#FFF':'#CDD'}`}));
+    ab.addEventListener('click',()=>{
+      if(isMulti){const c=state.answers[q.id]||[];state.answers[q.id]=c.includes(a.id)?c.filter(x=>x!==a.id):[...c,a.id];}
+      else state.answers[q.id]=a.id;
+      render();
+    });
+    list.appendChild(ab);
+  });
+  body.appendChild(list);
+  card.appendChild(body);
+
+  // nav
+  const nav = el('div',{class:'nav-row'});
+  const prev = el('button',{class:'btn-sec',text:'← Précédent',onclick:()=>{
+    if(state.questionIdx>0){state.questionIdx--;}
+    else if(state.sectionIdx>0){const p=SECTIONS[state.sectionIdx-1];state.sectionIdx--;state.questionIdx=SECTION_QUESTIONS[p.id].length-1;state.phase='question';}
+    render();
+  }});
+  prev.disabled = state.sectionIdx===0&&state.questionIdx===0;
+
+  const isLast = state.questionIdx===sQs.length-1&&state.sectionIdx===SECTIONS.length-1;
+  const next = el('button',{class:'btn-primary btn-accent',text:isLast?'Voir mes résultats →':'Suivant →',style:`background:${s.accent};opacity:${canGo?1:.4}`,onclick:()=>{
+    if(!canGo) return;
+    if(state.questionIdx<sQs.length-1){state.questionIdx++;}
+    else if(state.sectionIdx<SECTIONS.length-1){state.sectionIdx++;state.questionIdx=0;state.phase='section';}
+    else{state.phase='results';}
+    render();
+  }});
+  next.disabled = !canGo;
+  nav.appendChild(prev); nav.appendChild(next);
+  card.appendChild(nav);
+  return card;
+}
+
+// ── RESULTS ───────────────────────────────────────────────────────────────────
+
+function renderResults() {
+  const scores = computeScores();
+  const profiles = {};
+  SECTIONS.forEach(s => profiles[s.id]=getProfile(s.id,scores[s.id]));
+  const exclusions = (state.answers['Q18']||[]).map(id=>QUESTIONS.find(q=>q.id==='Q18')?.answers.find(a=>a.id===id)?.label).filter(Boolean);
+  const date = new Date().toLocaleDateString('fr-FR',{year:'numeric',month:'long',day:'numeric'});
+
+  const outer = el('div',{class:'results-outer'});
+  const card = el('div',{class:'card card-r'});
+
+  // header
+  const rh = el('div',{class:'r-header'});
+  rh.appendChild(el('div',{class:'logo'},[el('span',{class:'logo-diamond',text:'◆'}),el('span',{class:'logo-txt',text:'PROFIL INVESTISSEUR'})]));
+  rh.appendChild(el('p',{class:'r-pretitle',text:'Voici les résultats de votre profil'}));
+  rh.appendChild(el('h1',{class:'r-name',text:`${state.firstName} ${state.lastName}`}));
+  rh.appendChild(el('span',{class:'r-date',text:`Évaluation MiFID II · ${date}`}));
+  card.appendChild(rh);
+
+  // charts
+  const ca = el('div',{class:'charts-area'});
+  SECTIONS.forEach((s,i) => {
+    const row = el('div',{class:'chart-row fade-up',style:`animation-delay:${i*.18}s`});
+    const meta = el('div',{class:'chart-meta'});
+    meta.appendChild(svgIcon(s.id,s.accent,26));
+    const mt = el('div');
+    mt.appendChild(el('span',{class:'chart-sec-lbl',text:s.label,style:`color:${s.accent}`}));
+    mt.appendChild(el('span',{class:'chart-score',text:`${scores[s.id]} / ${MAX_SCORES[s.id]} pts`}));
+    meta.appendChild(mt);
+    const cw = el('div',{class:'chart-svg'}); cw.appendChild(arrowChart(s,profiles[s.id]));
+    row.appendChild(meta); row.appendChild(cw);
+    ca.appendChild(row);
+  });
+  card.appendChild(ca);
+
+  // detail cards
+  const dc = el('div');
+  SECTIONS.forEach((s,i) => {
+    const c = el('div',{class:'detail-card fade-up',style:`border-top-color:${s.accent};animation-delay:${.55+i*.15}s`});
+    const head = el('div',{class:'detail-head'});
+    head.appendChild(svgIcon(s.id,s.accent,22));
+    const ht = el('div');
+    ht.appendChild(el('span',{class:'detail-sec',text:s.label,style:`color:${s.accent}`}));
+    ht.appendChild(el('span',{class:'detail-prof',text:profiles[s.id]?.label||'—'}));
+    head.appendChild(ht); c.appendChild(head);
+    c.appendChild(el('p',{class:'detail-desc',text:profiles[s.id]?.desc||''}));
+    if(s.id==='ESG'&&exclusions.length>0){
+      const eb=el('div',{class:'excl-box'});
+      eb.appendChild(el('span',{class:'excl-title',text:'Secteurs exclus'}));
+      const tags=el('div',{class:'excl-tags'});
+      exclusions.forEach(l=>tags.appendChild(el('span',{class:'excl-tag',text:l})));
+      eb.appendChild(tags); c.appendChild(eb);
+    }
+    dc.appendChild(c);
+  });
+  card.appendChild(dc);
+
+  // footer
+  const rf = el('div',{class:'r-footer'});
+  rf.appendChild(el('p',{class:'disclaimer',text:"Ce questionnaire a été réalisé conformément aux exigences de la directive MiFID II. Les résultats sont établis sur la base des réponses fournies et ne constituent pas un conseil en investissement."}));
+  rf.appendChild(el('p',{class:'foot-date',text:`Document généré le ${date} · Confidentiel`}));
+  card.appendChild(rf);
+
+  outer.appendChild(card);
+  const rw = el('div',{class:'restart-wrap'});
+  rw.appendChild(el('button',{class:'btn-sec',text:'← Recommencer',onclick:()=>{Object.assign(state,{phase:'welcome',sectionIdx:0,questionIdx:0,answers:{},firstName:'',lastName:''});render();}}));
+  outer.appendChild(rw);
+  return outer;
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
