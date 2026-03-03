@@ -144,14 +144,14 @@ const SECTIONS = [
 
 const RESULTS = {
   Connaissances: [
-    { min:0,  max:9,  label:"Débutant",      desc:"Vous faîtes vos premiers pas dans le domaine de l'investissement financier."  },
+    { min:0,  max:9,  label:"Débutant",      desc:"Vous débutez dans l'univers de l'investissement. Nous vous accompagnerons avec des solutions pédagogiques et adaptées à votre niveau." },
     { min:10, max:19, label:"Intermédiaire", desc:"Vous avez une bonne compréhension des bases de l'investissement. Vous êtes prêt(e) pour des stratégies plus diversifiées." },
     { min:20, max:30, label:"Avancé",        desc:"Vous maîtrisez les concepts financiers complexes. Vous pouvez accéder à des produits sophistiqués et des stratégies avancées." },
   ],
   Risque: [
     { min:0,  max:5,  label:"Prudent",   desc:"La préservation du capital est votre priorité absolue. Vous privilégiez la sécurité sur le rendement." },
-    { min:6,  max:10, label:"Équilibré", desc:"Vous recherchez un juste équilibre entre performance et sécurité, avec une tolérance modérée au risque." },
-    { min:11, max:15, label:"Dynamique", desc:"Vous acceptez un risque  important pour viser des rendements supérieurs sur le long terme." },
+    { min:6,  max:10, label:"Équilibré", desc:"Vous recherchez un juste équilibre entre performance et sécurité, avec une tolérance modérée à la volatilité." },
+    { min:11, max:15, label:"Dynamique", desc:"Vous acceptez une volatilité importante pour viser des rendements supérieurs sur le long terme." },
     { min:16, max:20, label:"Offensif",  desc:"Vous recherchez la performance maximale et acceptez les fluctuations significatives de vos investissements." },
   ],
   ESG: [
@@ -170,26 +170,66 @@ const SECTION_QUESTIONS = {
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 
+/**
+ * Retourne le profil correspondant à un score pour une section donnée.
+ * Parcourt le tableau RESULTS[type] et renvoie l'entrée dont l'intervalle
+ * [min, max] contient le score. Retourne null si aucun profil ne correspond.
+ *
+ * @param {string} type  - Identifiant de section : "Connaissances", "Risque" ou "ESG"
+ * @param {number} score - Score brut calculé pour cette section
+ * @returns {object|null} - Objet profil { min, max, label, desc } ou null
+ */
 function getProfile(type, score) {
   return RESULTS[type]?.find(r => score >= r.min && score <= r.max) || null;
 }
 
+/**
+ * Calcule les scores totaux pour chacune des trois sections à partir des
+ * réponses enregistrées dans state.answers.
+ *
+ * - Les questions marquées "exclusion:true" (Q18 - secteurs ESG exclus)
+ *   sont ignorées car elles ne rapportent pas de points.
+ * - Pour les questions MONO (réponse unique), on additionne le score
+ *   de la réponse sélectionnée.
+ * - Pour les questions MULTI (réponses multiples), on additionne les scores
+ *   de toutes les réponses cochées.
+ *
+ * @returns {{ Connaissances: number, Risque: number, ESG: number }}
+ */
 function computeScores() {
   const s = {Connaissances:0, Risque:0, ESG:0};
   QUESTIONS.forEach(q => {
-    if (q.exclusion) return;
+    if (q.exclusion) return;                          // ignore Q18 (exclusions ESG)
     const ans = state.answers[q.id];
-    if (!ans) return;
+    if (!ans) return;                                 // question sans réponse
     if (q.format === 'MONO') {
       const f = q.answers.find(a => a.id === ans);
       if (f) s[q.type] += f.score;
     } else {
+      // MULTI : additionne chaque réponse cochée
       (ans||[]).forEach(id => { const f = q.answers.find(a => a.id === id); if (f) s[q.type] += f.score; });
     }
   });
   return s;
 }
 
+/**
+ * Fonction utilitaire de création d'éléments DOM.
+ * Remplace document.createElement + setAttribute en une seule ligne.
+ *
+ * Attributs spéciaux reconnus dans l'objet attrs :
+ *   - "class"      → e.className
+ *   - "style"      → e.style.cssText (chaîne CSS brute)
+ *   - "text"       → e.textContent
+ *   - "html"       → e.innerHTML (à utiliser avec précaution)
+ *   - "on[event]"  → addEventListener (ex: "onclick", "oninput")
+ *   - autres       → e.setAttribute(k, v)
+ *
+ * @param {string}        tag      - Nom de la balise HTML ("div", "button", etc.)
+ * @param {object}        [attrs]  - Attributs et propriétés à appliquer
+ * @param {Array|Node}    [children] - Enfants à insérer (nœuds ou chaînes)
+ * @returns {HTMLElement}
+ */
 function el(tag, attrs, children) {
   const e = document.createElement(tag);
   if (attrs) Object.entries(attrs).forEach(([k,v]) => {
@@ -206,20 +246,42 @@ function el(tag, attrs, children) {
 
 // ── SVG ICONS ─────────────────────────────────────────────────────────────────
 
+/**
+ * Génère une icône SVG duochrome pour une section donnée.
+ * Les icônes sont construites avec createElementNS (namespace SVG obligatoire)
+ * car les éléments SVG ne peuvent pas être créés avec createElement standard.
+ *
+ * Icônes disponibles :
+ *   - "Connaissances" : livret avec lignes (symbole de connaissance)
+ *   - "Risque"        : triangle d'alerte avec point d'exclamation
+ *   - "ESG"           : goutte / feuille (symbole de durabilité)
+ *
+ * Chaque icône utilise deux couches : un fond semi-transparent (opacity 0.2)
+ * et une forme pleine, avec des détails blancs par-dessus.
+ *
+ * @param {string} type  - Identifiant de section : "Connaissances", "Risque" ou "ESG"
+ * @param {string} color - Couleur principale de l'icône (ex: "#2A72C8")
+ * @param {number} [size=28] - Taille en pixels (width et height)
+ * @returns {SVGElement}
+ */
 function svgIcon(type, color, size) {
   size = size || 28;
   const ns = 'http://www.w3.org/2000/svg';
+  // Raccourci pour créer un élément SVG avec ses attributs
   const s = (tag, attrs) => { const e = document.createElementNS(ns,tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); return e; };
   const svg = s('svg', {width:size, height:size, viewBox:'0 0 28 28', fill:'none'});
   if (type === 'Connaissances') {
+    // Livret : deux rectangles décalés + trois lignes horizontales (texte stylisé)
     svg.append(s('rect',{x:4,y:5,width:14,height:18,rx:2,fill:color,opacity:.2}),s('rect',{x:7,y:3,width:14,height:18,rx:2,fill:color}),
       s('line',{x1:10,y1:8,x2:18,y2:8,stroke:'#fff','stroke-width':1.5,'stroke-linecap':'round'}),
       s('line',{x1:10,y1:11.5,x2:18,y2:11.5,stroke:'#fff','stroke-width':1.5,'stroke-linecap':'round'}),
       s('line',{x1:10,y1:15,x2:15,y2:15,stroke:'#fff','stroke-width':1.5,'stroke-linecap':'round'}));
   } else if (type === 'Risque') {
+    // Triangle d'alerte : ombre + triangle plein + trait vertical + point
     svg.append(s('path',{d:'M14 4 L25 23 H3 Z',fill:color,opacity:.2}),s('path',{d:'M14 7 L23 22 H5 Z',fill:color}),
       s('line',{x1:14,y1:12,x2:14,y2:17,stroke:'#fff','stroke-width':2,'stroke-linecap':'round'}),s('circle',{cx:14,cy:19.5,r:1.2,fill:'#fff'}));
   } else {
+    // Goutte / feuille ESG : cercle de fond + forme organique + reflet courbe
     svg.append(s('circle',{cx:14,cy:14,r:10,fill:color,opacity:.2}),
       s('path',{d:'M14 4 C14 4 7 10 7 16 C7 19.9 10.1 23 14 23 C17.9 23 21 19.9 21 16 C21 10 14 4 14 4Z',fill:color}),
       s('path',{d:'M14 23 C14 18 17 14 21 12',stroke:'#fff','stroke-width':1.5,'stroke-linecap':'round',opacity:.6}));
@@ -227,40 +289,85 @@ function svgIcon(type, color, size) {
   return svg;
 }
 
+/**
+ * Génère un graphique SVG en forme de flèche horizontale pour visualiser
+ * le profil obtenu dans une section.
+ *
+ * Fonctionnement :
+ *   1. Une piste horizontale grise est dessinée comme base.
+ *   2. La piste est divisée en segments colorés (un par niveau possible).
+ *      Les segments jusqu'au niveau atteint sont mis en couleur, les autres
+ *      restent grisés et semi-transparents.
+ *   3. Une tête de flèche circulaire (glow + cercle + triangle) est positionnée
+ *      à la fin du segment actif pour indiquer le résultat.
+ *   4. Le label du profil est affiché en jaune à droite de la flèche.
+ *   5. Chaque segment affiche son label en dessous, en jaune si actif.
+ *
+ * @param {object} section  - Objet section (id, accent, label…)
+ * @param {object} profile  - Profil obtenu { label, desc } ou null
+ * @returns {SVGElement}
+ */
 function arrowChart(section, profile) {
   const levels = RESULTS[section.id]||[];
+  // Dimensions du SVG et marges internes
   const W=560,H=100,padL=20,padR=110,padT=28;
   const innerW=W-padL-padR, arrowY=padT+(H-padT-28)/2, segW=innerW/levels.length;
+  // Index du niveau actif dans le tableau de niveaux
   const activeIdx=levels.findIndex(l=>l.label===profile?.label);
+  // Position X de la pointe de flèche (fin du segment actif)
   const arrowEndX=padL+(activeIdx+1)*segW;
+  // Palettes de couleurs selon le nombre de niveaux (3 ou 4)
   const cols={3:["#3A3D50","#5A5D78","#8899AA"],4:["#3A3D50","#5A6070","#8899AA","#AABB66"]};
   const colors=cols[levels.length]||levels.map((_,i)=>`hsl(${40+i*30},50%,45%)`);
   const ns='http://www.w3.org/2000/svg';
+  // Raccourci SVG avec support du texte
   const s=(tag,attrs,txt)=>{ const e=document.createElementNS(ns,tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); if(txt!==undefined)e.textContent=txt; return e; };
   const svg=s('svg',{width:'100%',viewBox:`0 0 ${W} ${H}`}); svg.style.cssText='display:block;overflow:visible';
+  // Piste de fond (rail gris)
   svg.appendChild(s('rect',{x:padL,y:arrowY-6,width:innerW,height:12,rx:6,fill:'#1E2030'}));
+  // Segments colorés + labels
   levels.forEach((lvl,i)=>{
     const x=padL+i*segW, isA=i===activeIdx;
     svg.appendChild(s('rect',{x:x+1,y:arrowY-6,width:segW-2,height:12,rx:i===0?6:i===levels.length-1?6:0,fill:i<=activeIdx?colors[i]:'#1E2030',opacity:i<=activeIdx?1:0.4}));
     svg.appendChild(s('text',{x:x+segW/2,y:arrowY+24,'text-anchor':'middle','font-size':11,fill:isA?'#F5C518':'#778899','font-family':'Arial,sans-serif','font-weight':isA?'700':'400'},lvl.label));
   });
+  // Tête de flèche : glow + cercle coloré + triangle pointant à droite
   if(activeIdx>=0){
     const g=document.createElementNS(ns,'g'); g.setAttribute('transform',`translate(${arrowEndX},${arrowY})`);
     g.appendChild(s('circle',{r:14,fill:section.accent,opacity:.15})); g.appendChild(s('circle',{r:9,fill:section.accent,opacity:.9}));
     g.appendChild(s('polygon',{points:'-4,-5 4,0 -4,5',fill:'#111'})); svg.appendChild(g);
   }
+  // Label du profil affiché à droite de la flèche
   svg.appendChild(s('text',{x:Math.min(arrowEndX+16,W-4),y:arrowY+5,'font-size':13,'font-weight':'700',fill:'#F5C518','font-family':'Arial,sans-serif'},profile?.label||''));
   return svg;
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 
+/**
+ * État global de l'application. Objet mutable partagé par toutes les fonctions.
+ *
+ * - phase       : écran affiché ("welcome" | "section" | "question" | "results")
+ * - sectionIdx  : index de la section en cours dans le tableau SECTIONS (0, 1 ou 2)
+ * - questionIdx : index de la question en cours dans la section active
+ * - answers     : dictionnaire { [questionId]: answerId | answerId[] }
+ *                 MONO → chaîne simple, MULTI → tableau d'identifiants
+ * - firstName   : prénom saisi sur l'écran d'accueil
+ * - lastName    : nom saisi sur l'écran d'accueil
+ */
 const state = { phase:'welcome', sectionIdx:0, questionIdx:0, answers:{}, firstName:'', lastName:'' };
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
 
 const root = document.getElementById('root');
 
+/**
+ * Fonction de rendu principale. Vide le conteneur #root puis délègue
+ * la construction du DOM à la fonction d'affichage correspondant à state.phase.
+ *
+ * C'est le point d'entrée unique pour toute mise à jour de l'interface :
+ * chaque interaction utilisateur modifie state puis appelle render().
+ */
 function render() {
   root.innerHTML = '';
   const views = { welcome:renderWelcome, section:renderSection, question:renderQuestion, results:renderResults };
@@ -270,6 +377,20 @@ function render() {
 
 // ── WELCOME ───────────────────────────────────────────────────────────────────
 
+/**
+ * Construit l'écran d'accueil.
+ *
+ * Contient :
+ *   - Le logo et le titre principal
+ *   - Les trois cartes de présentation des sections (Connaissances, Risque, ESG)
+ *   - Le formulaire de saisie du prénom et du nom
+ *   - Le bouton "Commencer" (désactivé tant que les deux champs sont vides)
+ *
+ * La fonction interne updateBtn() est appelée à chaque frappe pour activer
+ * ou désactiver le bouton sans relancer un render() complet.
+ *
+ * @returns {HTMLElement} - La carte d'accueil complète
+ */
 function renderWelcome() {
   const card = el('div',{class:'card'});
   card.appendChild(el('div',{class:'logo'},[el('span',{class:'logo-diamond',text:'◆'}),el('span',{class:'logo-txt',text:'PROFIL INVESTISSEUR'})]));
@@ -315,6 +436,19 @@ function renderWelcome() {
 
 // ── SECTION ───────────────────────────────────────────────────────────────────
 
+/**
+ * Construit l'écran d'introduction d'une section.
+ * Affiché entre deux sections pour préparer l'utilisateur au thème suivant.
+ *
+ * Contient :
+ *   - Une barre de progression par points (un point par section)
+ *   - L'icône SVG de la section dans un cercle coloré
+ *   - Le badge "SECTION X / 3", le titre et la description de la section
+ *   - Le nombre de questions à venir
+ *   - Le bouton "Commencer →" qui lance la première question de la section
+ *
+ * @returns {HTMLElement}
+ */
 function renderSection() {
   const s = SECTIONS[state.sectionIdx];
   const card = el('div',{class:'card card-sm',style:`border-top:6px solid ${s.accent}`});
@@ -340,6 +474,27 @@ function renderSection() {
 
 // ── QUESTION ──────────────────────────────────────────────────────────────────
 
+/**
+ * Construit l'écran d'une question individuelle.
+ *
+ * Gère deux formats :
+ *   - MONO  : une seule réponse possible (clic remplace la sélection précédente)
+ *   - MULTI : plusieurs réponses possibles (clic bascule l'état coché/décoché)
+ *
+ * Contient :
+ *   - Une barre supérieure colorée avec l'icône de section, le compteur
+ *     de questions et une barre de progression (% avancement dans la section)
+ *   - Le badge de format, le texte de la question
+ *   - La liste des boutons-réponses avec état visuel sélectionné / non sélectionné
+ *   - Les boutons de navigation "Précédent" et "Suivant / Voir mes résultats"
+ *
+ * La navigation "Précédent" remonte à la section précédente si on est
+ * à la première question de la section courante.
+ * La navigation "Suivant" passe à la section suivante (via renderSection)
+ * ou bascule sur les résultats à la dernière question du questionnaire.
+ *
+ * @returns {HTMLElement}
+ */
 function renderQuestion() {
   const s = SECTIONS[state.sectionIdx];
   const sQs = SECTION_QUESTIONS[s.id];
@@ -412,6 +567,21 @@ function renderQuestion() {
 
 // ── RESULTS ───────────────────────────────────────────────────────────────────
 
+/**
+ * Construit l'écran de résultats affiché à la fin du questionnaire.
+ *
+ * Étapes de construction :
+ *   1. Calcul des scores via computeScores() et résolution des profils via getProfile()
+ *   2. Récupération des secteurs exclus (réponses à Q18, question sans score)
+ *   3. En-tête avec nom de l'investisseur et date de l'évaluation
+ *   4. Graphiques en flèche (un par section) via arrowChart() — avec animation fadeUp
+ *   5. Cartes de détail : label du profil + description textuelle
+ *      Pour la section ESG, affiche également la liste des secteurs exclus si renseignée
+ *   6. Pied de page avec mention légale MiFID II et date
+ *   7. Bouton "Recommencer" qui remet l'état à zéro et retourne à l'accueil
+ *
+ * @returns {HTMLElement} - Conteneur extérieur incluant la carte résultats et le bouton reset
+ */
 function renderResults() {
   const scores = computeScores();
   const profiles = {};
@@ -482,6 +652,8 @@ function renderResults() {
 }
 
 // ── BOOT ──────────────────────────────────────────────────────────────────────
+
+// Lancement initial de l'application : affiche l'écran d'accueil.
 render();
 </script>
 </body>
