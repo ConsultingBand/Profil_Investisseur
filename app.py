@@ -2,7 +2,7 @@
 Profil Investisseur — Streamlit
 Questionnaire MiFID II : Connaissances · Risque · ESG
 
-Thème    : bleu marine épuré, typographie claire
+Thème    : fond blanc, typographie sobre, accents bleu #2563EB (style dashboard finance)
 Graphique: radar chart Plotly (st.plotly_chart) sur l'écran résultats
 """
 
@@ -18,61 +18,68 @@ st.set_page_config(
     layout="centered",
 )
 
-# Thème bleu marine — unique bloc CSS, zéro HTML dans le corps.
+# Thème clair épuré — unique bloc CSS, zéro HTML dans le corps.
 st.markdown("""
 <style>
   /* Fond et typographie */
-  .stApp                            { background-color: #0B1120; }
+  .stApp                            { background-color: #F5F7FA; }
   section[data-testid="stSidebar"]  { display: none; }
   html, body, [class*="css"]        { font-family: 'Segoe UI', Arial, sans-serif;
-                                      color: #C8D6E8; }
-  h1                                { color: #FFFFFF !important; font-weight: 300 !important;
-                                      letter-spacing: -0.5px; font-size: 2rem !important; }
-  h2, h3                            { color: #E8F0FB !important; font-weight: 400 !important; }
-  .block-container                  { max-width: 700px; padding-top: 2.5rem; }
-  hr                                { border-color: #1E2D45 !important; }
+                                      color: #1E293B; }
+  h1                                { color: #0F172A !important; font-weight: 600 !important;
+                                      letter-spacing: -0.5px; font-size: 1.9rem !important; }
+  h2, h3                            { color: #1E293B !important; font-weight: 500 !important; }
+  .block-container                  { max-width: 700px; padding-top: 2.5rem;
+                                      background: #FFFFFF; border-radius: 12px;
+                                      padding: 2.5rem 2rem 2rem; }
+  hr                                { border-color: #E2E8F0 !important; }
 
   /* Inputs */
-  input[type="text"]                { background: #0F1C30 !important;
-                                      border: 1px solid #2A3D55 !important;
-                                      color: #E8F0FB !important;
+  input[type="text"]                { background: #F8FAFC !important;
+                                      border: 1px solid #CBD5E1 !important;
+                                      color: #1E293B !important;
                                       border-radius: 6px !important; }
+  input[type="text"]:focus          { border-color: #2563EB !important;
+                                      box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important; }
 
   /* Radio / multiselect */
-  .stRadio label                    { color: #C8D6E8 !important; font-size: 15px; }
+  .stRadio label                    { color: #334155 !important; font-size: 15px; }
   .stRadio > div                    { gap: 6px; }
 
   /* Bouton principal */
-  .stButton > button                { background: #1B6FCB !important;
+  .stButton > button                { background: #2563EB !important;
                                       color: #FFFFFF !important;
                                       font-weight: 600 !important;
                                       border: none !important;
                                       border-radius: 6px !important;
-                                      letter-spacing: 0.3px;
+                                      letter-spacing: 0.2px;
                                       width: 100%; }
-  .stButton > button:hover          { background: #2580E0 !important; }
+  .stButton > button:hover          { background: #1D4ED8 !important; }
 
   /* Métriques */
-  [data-testid="stMetric"]          { background: #0F1C30;
-                                      border: 1px solid #1E2D45;
+  [data-testid="stMetric"]          { background: #F8FAFC;
+                                      border: 1px solid #E2E8F0;
                                       border-radius: 8px;
                                       padding: 14px !important; }
-  [data-testid="stMetricLabel"]     { color: #6B8CAE !important;
+  [data-testid="stMetricLabel"]     { color: #64748B !important;
                                       font-size: 11px !important;
                                       text-transform: uppercase;
-                                      letter-spacing: 1.5px; }
-  [data-testid="stMetricValue"]     { color: #FFFFFF !important;
+                                      letter-spacing: 1.2px; }
+  [data-testid="stMetricValue"]     { color: #0F172A !important;
                                       font-size: 18px !important;
                                       font-weight: 600 !important; }
-  [data-testid="stMetricDelta"]     { color: #4A9EDB !important;
+  [data-testid="stMetricDelta"]     { color: #2563EB !important;
                                       font-size: 12px !important; }
 
   /* Barre de progression */
-  [data-testid="stProgressBar"] > div > div { background: #1B6FCB !important; }
+  [data-testid="stProgressBar"] > div > div { background: #2563EB !important; }
 
   /* Multiselect tags */
-  .stMultiSelect span[data-baseweb="tag"] { background: #1B3A5C !important;
-                                            color: #A8C4E0 !important; }
+  .stMultiSelect span[data-baseweb="tag"] { background: #DBEAFE !important;
+                                            color: #1D4ED8 !important; }
+
+  /* Caption / textes secondaires */
+  .stCaption, small                 { color: #94A3B8 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -261,37 +268,37 @@ def radar_chart(scores: dict) -> go.Figure:
 
     fig = go.Figure()
 
-    # Zone remplie
+    # Zone remplie — thème clair
     fig.add_trace(go.Scatterpolar(
         r=values,
         theta=categories,
         fill="toself",
-        fillcolor="rgba(27, 111, 203, 0.2)",
-        line=dict(color="#4A9EDB", width=2),
-        marker=dict(size=6, color="#4A9EDB"),
+        fillcolor="rgba(37, 99, 235, 0.10)",
+        line=dict(color="#2563EB", width=2.5),
+        marker=dict(size=7, color="#2563EB"),
         name="Votre profil",
         hovertemplate="%{theta} : %{r}%<extra></extra>",
     ))
 
     fig.update_layout(
         polar=dict(
-            bgcolor="#0F1C30",
+            bgcolor="#FFFFFF",
             radialaxis=dict(
                 visible=True,
                 range=[0, 100],
                 ticksuffix="%",
-                tickfont=dict(size=10, color="#6B8CAE"),
-                gridcolor="#1E2D45",
-                linecolor="#1E2D45",
+                tickfont=dict(size=10, color="#94A3B8"),
+                gridcolor="#E2E8F0",
+                linecolor="#E2E8F0",
             ),
             angularaxis=dict(
-                tickfont=dict(size=13, color="#C8D6E8"),
-                gridcolor="#1E2D45",
-                linecolor="#1E2D45",
+                tickfont=dict(size=13, color="#334155"),
+                gridcolor="#E2E8F0",
+                linecolor="#E2E8F0",
             ),
         ),
-        paper_bgcolor="#0B1120",
-        plot_bgcolor="#0B1120",
+        paper_bgcolor="#F5F7FA",
+        plot_bgcolor="#F5F7FA",
         showlegend=False,
         margin=dict(t=40, b=40, l=60, r=60),
         height=360,
