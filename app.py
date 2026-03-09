@@ -2,51 +2,77 @@
 Profil Investisseur — Streamlit
 Questionnaire MiFID II : Connaissances · Risque · ESG
 
-Navigation : un seul entier `current_q` (0 → N-1) remplace section_idx + question_idx.
-Style      : un unique bloc CSS global en tête — zéro HTML dans le corps de l'app.
+Thème    : bleu marine épuré, typographie claire
+Graphique: radar chart Plotly (st.plotly_chart) sur l'écran résultats
 """
 
 import streamlit as st
+import plotly.graph_objects as go
 from datetime import datetime
 
 # ── CONFIGURATION ─────────────────────────────────────────────────────────────
 
-st.set_page_config(page_title="Profil Investisseur", page_icon="◆", layout="centered")
+st.set_page_config(
+    page_title="Profil Investisseur",
+    page_icon="◆",
+    layout="centered",
+)
 
-# Unique bloc CSS — tout le style est ici, nulle part ailleurs.
+# Thème bleu marine — unique bloc CSS, zéro HTML dans le corps.
 st.markdown("""
 <style>
-  .stApp                            { background-color: #0A0C10; }
+  /* Fond et typographie */
+  .stApp                            { background-color: #0B1120; }
   section[data-testid="stSidebar"]  { display: none; }
-  html, body, [class*="css"]        { font-family: Georgia, serif; color: #CDD; }
-  h1, h2, h3                        { color: #FFF !important; font-weight: 400 !important; }
-  .block-container                  { max-width: 680px; padding-top: 2.5rem; }
-  hr                                { border-color: #1E2028 !important; }
+  html, body, [class*="css"]        { font-family: 'Segoe UI', Arial, sans-serif;
+                                      color: #C8D6E8; }
+  h1                                { color: #FFFFFF !important; font-weight: 300 !important;
+                                      letter-spacing: -0.5px; font-size: 2rem !important; }
+  h2, h3                            { color: #E8F0FB !important; font-weight: 400 !important; }
+  .block-container                  { max-width: 700px; padding-top: 2.5rem; }
+  hr                                { border-color: #1E2D45 !important; }
 
-  input[type="text"]                { background: #161A22 !important;
-                                      border: 1.5px solid #2A2D35 !important;
-                                      color: #EEE !important;
-                                      border-radius: 8px !important; }
+  /* Inputs */
+  input[type="text"]                { background: #0F1C30 !important;
+                                      border: 1px solid #2A3D55 !important;
+                                      color: #E8F0FB !important;
+                                      border-radius: 6px !important; }
 
-  .stRadio label, .stCheckbox label { color: #CDD !important; font-size: 15px; }
+  /* Radio / multiselect */
+  .stRadio label                    { color: #C8D6E8 !important; font-size: 15px; }
+  .stRadio > div                    { gap: 6px; }
 
-  .stButton > button                { background: #F5C518 !important;
-                                      color: #111 !important;
-                                      font-weight: 700 !important;
+  /* Bouton principal */
+  .stButton > button                { background: #1B6FCB !important;
+                                      color: #FFFFFF !important;
+                                      font-weight: 600 !important;
                                       border: none !important;
-                                      border-radius: 10px !important;
+                                      border-radius: 6px !important;
+                                      letter-spacing: 0.3px;
                                       width: 100%; }
+  .stButton > button:hover          { background: #2580E0 !important; }
 
-  [data-testid="stMetric"]          { background: #111318;
-                                      border: 1px solid #1E2028;
-                                      border-radius: 12px;
-                                      padding: 16px !important; }
-  [data-testid="stMetricLabel"]     { color: #8899BB !important;
+  /* Métriques */
+  [data-testid="stMetric"]          { background: #0F1C30;
+                                      border: 1px solid #1E2D45;
+                                      border-radius: 8px;
+                                      padding: 14px !important; }
+  [data-testid="stMetricLabel"]     { color: #6B8CAE !important;
                                       font-size: 11px !important;
                                       text-transform: uppercase;
-                                      letter-spacing: 2px; }
-  [data-testid="stMetricValue"]     { color: #F5C518 !important;
-                                      font-size: 20px !important; }
+                                      letter-spacing: 1.5px; }
+  [data-testid="stMetricValue"]     { color: #FFFFFF !important;
+                                      font-size: 18px !important;
+                                      font-weight: 600 !important; }
+  [data-testid="stMetricDelta"]     { color: #4A9EDB !important;
+                                      font-size: 12px !important; }
+
+  /* Barre de progression */
+  [data-testid="stProgressBar"] > div > div { background: #1B6FCB !important; }
+
+  /* Multiselect tags */
+  .stMultiSelect span[data-baseweb="tag"] { background: #1B3A5C !important;
+                                            color: #A8C4E0 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -157,7 +183,7 @@ QUESTIONS = [
                  ("La réduction mesurable des émissions carbone.", 2),
                  ("L'alignement avec la taxonomie européenne durable.", 3)]},
 
-    # Q18 : exclusions, pas de score — affichée séparément sur le dernier écran
+    # Q18 : exclusions sectorielles, sans score
     {"id": "Q18", "section": "ESG", "multi": True, "exclusion": True,
      "label": "Quelles industries souhaitez-vous exclure de votre portefeuille ?",
      "answers": [("Armement / armes controversées", 0), ("Tabac", 0),
@@ -170,47 +196,44 @@ QUESTIONS = [
 ]
 
 SECTIONS = {
-    "Connaissances": {"icon": "📚", "color": "#2A72C8"},
-    "Risque":        {"icon": "⚠️",  "color": "#E07840"},
-    "ESG":           {"icon": "🌱", "color": "#4CAF8A"},
+    "Connaissances": {"icon": "📘"},
+    "Risque":        {"icon": "⚖️"},
+    "ESG":           {"icon": "🌿"},
 }
 
 RESULTS = {
     "Connaissances": [
-        (0,  9,  "Débutant",      "📘", "Vous débutez dans l'univers de l'investissement. Nous vous accompagnerons avec des solutions pédagogiques adaptées."),
-        (10, 19, "Intermédiaire", "📗", "Bonne compréhension des bases. Vous êtes prêt(e) pour des stratégies plus diversifiées."),
-        (20, 30, "Avancé",        "📙", "Vous maîtrisez les concepts financiers complexes et pouvez accéder à des produits sophistiqués."),
+        (0,  9,  "Débutant",      "Vous débutez dans l'univers de l'investissement. Nous vous accompagnerons avec des solutions pédagogiques adaptées."),
+        (10, 19, "Intermédiaire", "Bonne compréhension des bases. Vous êtes prêt(e) pour des stratégies plus diversifiées."),
+        (20, 30, "Avancé",        "Vous maîtrisez les concepts financiers complexes et pouvez accéder à des produits sophistiqués."),
     ],
     "Risque": [
-        (0,  5,  "Prudent",   "🛡️", "La préservation du capital est votre priorité. Vous privilégiez la sécurité sur le rendement."),
-        (6,  10, "Équilibré", "⚖️", "Vous recherchez un équilibre entre performance et sécurité, avec une tolérance modérée à la volatilité."),
-        (11, 15, "Dynamique", "📈", "Vous acceptez une volatilité importante pour viser des rendements supérieurs sur le long terme."),
-        (16, 20, "Offensif",  "🚀", "Vous recherchez la performance maximale et acceptez des fluctuations significatives."),
+        (0,  5,  "Prudent",   "La préservation du capital est votre priorité. Vous privilégiez la sécurité sur le rendement."),
+        (6,  10, "Équilibré", "Vous recherchez un équilibre entre performance et sécurité, avec une tolérance modérée à la volatilité."),
+        (11, 15, "Dynamique", "Vous acceptez une volatilité importante pour viser des rendements supérieurs sur le long terme."),
+        (16, 20, "Offensif",  "Vous recherchez la performance maximale et acceptez des fluctuations significatives."),
     ],
     "ESG": [
-        (0, 3, "Neutre",    "⚪", "La performance financière reste votre critère principal. Les aspects ESG ne sont pas une priorité à ce stade."),
-        (4, 6, "Intéressé", "🌱", "Vous portez un intérêt croissant aux enjeux durables, à intégrer progressivement."),
-        (7, 9, "Engagé",    "🌍", "Le développement durable est au cœur de votre stratégie patrimoniale."),
+        (0, 3, "Neutre",    "La performance financière reste votre critère principal. Les aspects ESG ne sont pas une priorité à ce stade."),
+        (4, 6, "Intéressé", "Vous portez un intérêt croissant aux enjeux durables, à intégrer progressivement."),
+        (7, 9, "Engagé",    "Le développement durable est au cœur de votre stratégie patrimoniale."),
     ],
 }
 
 MAX_SCORES = {"Connaissances": 30, "Risque": 20, "ESG": 9}
 
-# Questions de navigation (sans Q18 qui est hors scoring)
 NAV_QUESTIONS = [q for q in QUESTIONS if not q.get("exclusion")]
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
 
 def get_profile(section: str, score: int) -> tuple:
-    """Retourne (label, emoji, desc) pour un score donné dans une section."""
-    for mn, mx, label, emoji, desc in RESULTS[section]:
+    for mn, mx, label, desc in RESULTS[section]:
         if mn <= score <= mx:
-            return label, emoji, desc
-    return "—", "", ""
+            return label, desc
+    return "—", ""
 
 
 def compute_scores() -> dict:
-    """Calcule les scores par section depuis st.session_state.answers."""
     scores = {s: 0 for s in SECTIONS}
     for q in NAV_QUESTIONS:
         ans = st.session_state.answers.get(q["id"])
@@ -223,13 +246,65 @@ def compute_scores() -> dict:
             scores[q["section"]] += answer_map.get(ans, 0)
     return scores
 
+
+def radar_chart(scores: dict) -> go.Figure:
+    """
+    Radar chart Plotly — représente les 3 dimensions du profil.
+    Les scores sont normalisés en pourcentage du score max de chaque section.
+    """
+    sections   = list(SECTIONS.keys())
+    pct_scores = [round(scores[s] / MAX_SCORES[s] * 100) for s in sections]
+
+    # Fermeture du polygone (Plotly exige de répéter le 1er point)
+    categories = sections + [sections[0]]
+    values     = pct_scores + [pct_scores[0]]
+
+    fig = go.Figure()
+
+    # Zone remplie
+    fig.add_trace(go.Scatterpolar(
+        r=values,
+        theta=categories,
+        fill="toself",
+        fillcolor="rgba(27, 111, 203, 0.2)",
+        line=dict(color="#4A9EDB", width=2),
+        marker=dict(size=6, color="#4A9EDB"),
+        name="Votre profil",
+        hovertemplate="%{theta} : %{r}%<extra></extra>",
+    ))
+
+    fig.update_layout(
+        polar=dict(
+            bgcolor="#0F1C30",
+            radialaxis=dict(
+                visible=True,
+                range=[0, 100],
+                ticksuffix="%",
+                tickfont=dict(size=10, color="#6B8CAE"),
+                gridcolor="#1E2D45",
+                linecolor="#1E2D45",
+            ),
+            angularaxis=dict(
+                tickfont=dict(size=13, color="#C8D6E8"),
+                gridcolor="#1E2D45",
+                linecolor="#1E2D45",
+            ),
+        ),
+        paper_bgcolor="#0B1120",
+        plot_bgcolor="#0B1120",
+        showlegend=False,
+        margin=dict(t=40, b=40, l=60, r=60),
+        height=360,
+    )
+    return fig
+
 # ── SESSION STATE ─────────────────────────────────────────────────────────────
 
 def init():
     defaults = {
-        "phase":      "welcome",  # welcome | questions | results
-        "current_q":  0,          # index dans NAV_QUESTIONS (0 → N-1)
-        "answers":    {},         # { question_id: label | [labels] }
+        "phase":      "welcome",
+        "current_q":  0,
+        "answers":    {},
         "first_name": "",
         "last_name":  "",
     }
@@ -242,7 +317,7 @@ init()
 # ── ÉCRAN ACCUEIL ─────────────────────────────────────────────────────────────
 
 def render_welcome():
-    st.markdown("### ◆ PROFIL INVESTISSEUR")
+    st.markdown("##### ◆ PROFIL INVESTISSEUR")
     st.title("Construisons votre profil patrimonial")
     st.caption(
         "Un questionnaire en trois étapes pour définir votre stratégie d'investissement "
@@ -250,7 +325,6 @@ def render_welcome():
     )
     st.divider()
 
-    # Présentation des 3 sections
     cols = st.columns(3)
     for col, (name, meta) in zip(cols, SECTIONS.items()):
         q_count = sum(1 for q in NAV_QUESTIONS if q["section"] == name)
@@ -281,11 +355,12 @@ def render_questions():
     total = len(NAV_QUESTIONS)
     meta  = SECTIONS[q["section"]]
 
-    # Barre de progression native
-    st.progress(idx / total, text=f"{meta['icon']}  {q['section']}  ·  Question {idx + 1} / {total}")
+    st.progress(
+        (idx + 1) / total,
+        text=f"{meta['icon']}  **{q['section']}**  ·  Question {idx + 1} / {total}"
+    )
     st.divider()
 
-    # Intitulé et format
     st.caption("Plusieurs réponses possibles" if q["multi"] else "Une seule réponse")
     st.subheader(q["label"])
 
@@ -294,17 +369,17 @@ def render_questions():
 
     if q["multi"]:
         default = cur_ans if isinstance(cur_ans, list) else []
-        chosen  = st.multiselect("Réponse(s) :", labels, default=default, key=f"w_{q['id']}")
+        chosen  = st.multiselect("", labels, default=default, key=f"w_{q['id']}")
         st.session_state.answers[q["id"]] = chosen or None
-        can_go = True  # MULTI : toujours navigable
+        can_go  = True
     else:
         default_idx = labels.index(cur_ans) if cur_ans in labels else None
-        chosen = st.radio("Réponse :", labels, index=default_idx, key=f"w_{q['id']}")
+        chosen = st.radio("", labels, index=default_idx, key=f"w_{q['id']}")
         if chosen:
             st.session_state.answers[q["id"]] = chosen
         can_go = chosen is not None
 
-    # Q18 affichée en supplément sur la dernière question
+    # Q18 — exclusions ESG, affichée sur la dernière question
     is_last = idx == total - 1
     if is_last:
         st.divider()
@@ -313,12 +388,11 @@ def render_questions():
         cur_excl    = st.session_state.answers.get("Q18") or []
         st.caption("Optionnel — Exclusions sectorielles ESG")
         st.subheader(q18["label"])
-        chosen_excl = st.multiselect("Secteurs à exclure :", excl_labels, default=cur_excl, key="w_Q18")
+        chosen_excl = st.multiselect("", excl_labels, default=cur_excl, key="w_Q18")
         st.session_state.answers["Q18"] = chosen_excl or None
 
     st.divider()
 
-    # Navigation
     c1, c2 = st.columns(2)
     with c1:
         if idx > 0 and st.button("← Précédent"):
@@ -327,9 +401,8 @@ def render_questions():
     with c2:
         label_next = "Voir mes résultats →" if is_last else "Suivant →"
         if st.button(label_next, disabled=not can_go):
-            if is_last:
-                st.session_state.phase = "results"
-            else:
+            st.session_state.phase = "results" if is_last else "questions"
+            if not is_last:
                 st.session_state.current_q += 1
             st.rerun()
 
@@ -339,36 +412,38 @@ def render_results():
     scores = compute_scores()
     date   = datetime.now().strftime("%d %B %Y")
 
-    st.markdown("### ◆ PROFIL INVESTISSEUR")
+    st.markdown("##### ◆ PROFIL INVESTISSEUR")
     st.title(f"{st.session_state.first_name} {st.session_state.last_name}")
     st.caption(f"Évaluation MiFID II · {date}")
     st.divider()
 
-    # Synthèse en 3 métriques
+    # — Radar chart —
+    st.plotly_chart(radar_chart(scores), use_container_width=True)
+    st.divider()
+
+    # — Métriques synthèse —
     cols = st.columns(3)
     for col, (section, _) in zip(cols, SECTIONS.items()):
-        label, emoji, _ = get_profile(section, scores[section])
+        label, _ = get_profile(section, scores[section])
         with col:
             st.metric(
                 label=section,
-                value=f"{emoji} {label}",
+                value=label,
                 delta=f"{scores[section]} / {MAX_SCORES[section]} pts",
             )
 
     st.divider()
 
-    # Détail par section
+    # — Détail par section —
     for section, meta in SECTIONS.items():
-        label, emoji, desc = get_profile(section, scores[section])
-        st.markdown(f"**{meta['icon']}  {section}**")
-        st.subheader(f"{emoji} {label}")
+        label, desc = get_profile(section, scores[section])
+        st.markdown(f"**{meta['icon']}  {section}** — {label}")
         st.write(desc)
 
-        # Exclusions ESG
         if section == "ESG":
             excl = st.session_state.answers.get("Q18") or []
             if excl:
-                st.error("**Secteurs exclus :** " + " · ".join(excl))
+                st.info("**Secteurs exclus :** " + " · ".join(excl))
 
         st.divider()
 
