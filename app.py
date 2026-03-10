@@ -13,13 +13,14 @@ Modèle de stockage : chaque réponse est un objet complet
     "score":         int,
   }
 
-Export : CSV et JSON disponibles sur l'écran résultats.
+Export : PDF et JSON disponibles sur l'écran résultats.
 """
 
-import streamlit as st #Récupérer Streamlit 
+import streamlit as st
 import plotly.graph_objects as go
-import json, csv, io
+import json, io
 from datetime import datetime
+from export_profil import export_pdf
 
 # ── CONFIGURATION ─────────────────────────────────────────────────────────────
 
@@ -307,36 +308,6 @@ def build_report(scores: dict) -> dict:
     }
 
 
-def export_csv(report: dict) -> bytes:
-    """Génère un CSV avec une ligne par question."""
-    buf = io.StringIO()
-    w   = csv.writer(buf)
-
-    # En-tête identité
-    w.writerow(["Prénom", "Nom", "Date", "Heure"])
-    m = report["meta"]
-    w.writerow([m["prenom"], m["nom"], m["date"], m["heure"]])
-    w.writerow([])
-
-    # Profils synthèse
-    w.writerow(["Section", "Profil", "Score", "Score max"])
-    for section, p in report["profils"].items():
-        w.writerow([section, p["label"], p["score"], p["score_max"]])
-    w.writerow([])
-
-    # Exclusions ESG
-    w.writerow(["Exclusions ESG"])
-    w.writerow([" | ".join(report["exclusions"]) or "Aucune"])
-    w.writerow([])
-
-    # Détail question par question
-    w.writerow(["ID", "Section", "Question", "Format", "Réponse(s)", "Score"])
-    for row in report["detail"]:
-        w.writerow([row["id"], row["section"], row["question"],
-                    row["format"], row["reponses"], row["score"]])
-
-    return buf.getvalue().encode("utf-8-sig")  # utf-8-sig pour Excel
-
 
 def export_json(report: dict) -> bytes:
     return json.dumps(report, ensure_ascii=False, indent=2).encode("utf-8")
@@ -491,7 +462,7 @@ def render_results():
     # — En-tête —
     st.markdown("##### ◆ PROFIL INVESTISSEUR")
     st.title(f"{m['prenom']} {m['nom']}")
-    st.caption(f"Évaluation MiFID II · {m['date']} à {m['heure']}")
+    st.caption(f"{m['date']} à {m['heure']}")
     st.divider()
 
     # — Radar chart —
@@ -531,14 +502,15 @@ def render_results():
     # — Exports —
     st.divider()
     st.markdown("**Exporter le rapport**")
+    report["questions_full"] = QUESTIONS
     fname = f"profil_{m['nom'].lower()}_{m['prenom'].lower()}_{datetime.now().strftime('%Y%m%d')}"
     c1, c2 = st.columns(2)
     with c1:
         st.download_button(
-            label="⬇ Télécharger CSV",
-            data=export_csv(report),
-            file_name=f"{fname}.csv",
-            mime="text/csv",
+            label="⬇ Télécharger PDF",
+            data=export_pdf(report),
+            file_name=f"{fname}.pdf",
+            mime="application/pdf",
         )
     with c2:
         st.download_button(
@@ -551,8 +523,9 @@ def render_results():
     # — Disclaimer —
     st.divider()
     st.caption(
-        "Ce questionnaire est un test et ne constitue pas une procédure complète. "
-        "Les résultats ne constituent pas un conseil en investissement. "
+        "⚠️ Ce questionnaire est fourni à titre de démonstration uniquement. "
+        "Il ne constitue pas une garantie de conformité auprès d'un régulateur "
+        "et ne saurait remplacer une procédure de profilage réglementaire complète. "
         f"Document généré le {m['date']} à {m['heure']} · Confidentiel."
     )
     st.write("")
