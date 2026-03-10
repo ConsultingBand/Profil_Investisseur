@@ -390,11 +390,10 @@ init()
 # ── ÉCRAN ACCUEIL ─────────────────────────────────────────────────────────────
 
 def render_welcome():
-    st.markdown("##### ◆ PROFIL INVESTISSEUR")
-    st.title("Construisons votre profil patrimonial")
+    st.markdown("##### ◆ Profil investisseur")
+    st.title("Test pour déterminer le profil investisseur.")
     st.caption(
-        "Un questionnaire en trois étapes pour définir votre stratégie d'investissement "
-        "personnalisée, conforme aux exigences MiFID II."
+        "Le questionnaire se fera en 3 étapes: Connaissances, réaction face au risque, dimension ESG."
     )
     st.divider()
 
@@ -552,7 +551,7 @@ def render_results():
     # — Disclaimer —
     st.divider()
     st.caption(
-        "Ce questionnaire a été réalisé conformément aux exigences de la directive MiFID II. "
+        "Ce questionnaire est un test et ne constitue pas une procédure complète. "
         "Les résultats ne constituent pas un conseil en investissement. "
         f"Document généré le {m['date']} à {m['heure']} · Confidentiel."
     )
