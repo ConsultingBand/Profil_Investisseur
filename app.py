@@ -1,7 +1,9 @@
 """
 Profil Investisseur — Streamlit
-Questionnaire MiFID II : Connaissances · Risque · ESG
+Questionnaire -> Connaissances · Risque · ESG
+Avant de déployer ce code, il est important de se l'approprier pleinement pour l'installer dans votre système.
 
+On récupère l'ensemble des réponses dans un objet, pour stocker les résultats du questionnaire.
 Modèle de stockage : chaque réponse est un objet complet
   {
     "section":       str,
@@ -14,7 +16,7 @@ Modèle de stockage : chaque réponse est un objet complet
 Export : CSV et JSON disponibles sur l'écran résultats.
 """
 
-import streamlit as st
+import streamlit as st #Récupérer Streamlit 
 import plotly.graph_objects as go
 import json, csv, io
 from datetime import datetime
